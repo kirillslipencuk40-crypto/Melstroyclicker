@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>MellStroy — Tap to Earn</title>
+
+<!-- Telegram Mini Apps SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- Firebase (для живого лидерборда — см. README, раздел "Живой лидерборд") -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css?v=2" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== TOP BAR: balance ===== -->
+  <header class="topbar">
+    <div class="topbar__ticker" id="ticker">
+      <div class="topbar__ticker-track" id="tickerTrack"></div>
+    </div>
+
+    <div class="balance">
+      <div class="balance__row">
+        <span class="balance__coin">🟣</span>
+        <span class="balance__amount" id="balanceAmount">0</span>
+      </div>
+      <div class="balance__label">$MELL</div>
+    </div>
+
+    <div class="topbar__stats">
+      <div class="stat">
+        <span class="stat__value" id="perTapValue">+1</span>
+        <span class="stat__label">за тап</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value" id="perSecValue">+0</span>
+        <span class="stat__label">в сек</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== SCREENS ===== -->
+  <main class="screens">
+
+    <!-- HOME -->
+    <section class="screen screen--home active" data-screen="home">
+      <div class="stage">
+        <div class="stage__float-layer" id="floatLayer"></div>
+
+        <button class="tap-btn" id="tapBtn" aria-label="Тапни MellStroy">
+          <span class="tap-btn__ring"></span>
+          <span class="tap-btn__ring tap-btn__ring--2"></span>
+          <img src="assets/mellstroy-avatar.png" alt="MellStroy" class="tap-btn__img" id="tapImg" onerror="this.style.display='none'; this.parentElement.classList.add('tap-btn--fallback')" />
+          <span class="tap-btn__emoji">🔥</span>
+        </button>
+
+        <div class="hint" id="memeBubble">жми по MellStroy, зарабатывай $MELL</div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="pill-btn" id="dailyBonusBtn">
+          <span data-icon-slot="dailyBonus">🎁</span> Ежедневный бонус
+          <span class="pill-btn__dot" id="dailyDot"></span>
+        </button>
+        <button class="pill-btn pill-btn--boost" id="memeBoostBtn">
+          <span data-icon-slot="memeBoost">⚡</span> Мем-буст
+        </button>
+      </div>
+    </section>
+
+    <!-- UPGRADES -->
+    <section class="screen screen--upgrades" data-screen="upgrades">
+      <h2 class="screen__title">Улучшения</h2>
+      <p class="screen__subtitle">Прокачивай MellStroy, увеличивай доход</p>
+
+      <div class="cards" id="upgradesList"></div>
+    </section>
+
+    <!-- WHEEL -->
+    <section class="screen screen--wheel" data-screen="wheel">
+      <h2 class="screen__title">Колесо фортуны</h2>
+      <p class="screen__subtitle" id="wheelSubtitle">Крути за <span id="wheelCostLabel">100K</span> — приз от 1K до 500K</p>
+
+      <div class="wheel-wrap">
+        <div class="wheel-pointer">▼</div>
+        <div class="wheel" id="wheel"></div>
+      </div>
+
+      <button class="spin-btn" id="spinBtn">
+        <span data-icon-slot="wheelSpin">🎡</span> <span id="spinBtnLabel">Крутить за 100K</span>
+      </button>
+
+      <div class="wheel-legend" id="wheelLegend"></div>
+    </section>
+
+    <!-- LEADERS -->
+    <section class="screen screen--leaders" data-screen="leaders">
+      <h2 class="screen__title">Таблица лидеров</h2>
+      <p class="screen__subtitle">Только реальные игроки</p>
+
+      <div class="leaderboard" id="leaderboardList"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="screen screen--profile" data-screen="profile">
+      <h2 class="screen__title">Профиль</h2>
+
+      <div class="profile-card">
+        <div class="profile-card__avatar">🟣</div>
+        <div class="profile-card__name" id="profileName">Игрок</div>
+        <div class="profile-card__level" id="profileLevel">Уровень 1</div>
+      </div>
+
+      <div class="profile-grid" id="profileStats"></div>
+
+      <h3 class="screen__title screen__title--sm">Достижения</h3>
+      <div class="achievements" id="achievementsList"></div>
+
+      <button class="danger-btn" id="resetBtn">Сбросить прогресс</button>
+    </section>
+
+  </main>
+
+  <!-- ===== BOTTOM NAV ===== -->
+  <nav class="navbar">
+    <button class="navbtn active" data-target="home">
+      <span class="navbtn__icon" data-icon-slot="navHome">🏠</span><span>Главная</span>
+    </button>
+    <button class="navbtn" data-target="upgrades">
+      <span class="navbtn__icon" data-icon-slot="navUpgrades">🚀</span><span>Улучшения</span>
+    </button>
+    <button class="navbtn" data-target="wheel">
+      <span class="navbtn__icon" data-icon-slot="navWheel">🎡</span><span>Колесо</span>
+    </button>
+    <button class="navbtn" data-target="leaders">
+      <span class="navbtn__icon" data-icon-slot="navLeaders">🏆</span><span>Лидеры</span>
+    </button>
+    <button class="navbtn" data-target="profile">
+      <span class="navbtn__icon" data-icon-slot="navProfile">👤</span><span>Профиль</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ===== MODAL: daily bonus / achievement / meme popup ===== -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal">
+    <div class="modal__emoji" id="modalEmoji">🎁</div>
+    <div class="modal__title" id="modalTitle">Бонус!</div>
+    <div class="modal__text" id="modalText"></div>
+    <button class="modal__btn" id="modalBtn">Забрать</button>
+  </div>
+</div>
+
+<audio id="sfxTap" preload="auto" src="assets/tap.mp3"></audio>
+<audio id="sfxCoin" preload="auto" src="assets/coin.mp3"></audio>
+<audio id="sfxBoost" preload="auto" src="assets/boost-music.mp3"></audio>
+
+<script src="script.js?v=2"></script>
+</body>
+</html>
