@@ -1,0 +1,550 @@
+/* =========================================================
+   MELLSTROY — design tokens
+   Palette: near-black stream-overlay purple + neon accents
+   Type: Rubik Mono One (display/numbers) + Manrope (body)
+   Signature: scrolling "live chat" ticker + donation-alert tap button
+   ========================================================= */
+
+:root{
+  --bg:            #0F0A1E;
+  --bg-alt:        #170F2B;
+  --surface:       #1E1538;
+  --surface-2:     #271A47;
+  --stroke:        #362757;
+
+  --magenta:       #FF2E9A;
+  --magenta-dim:   #7A1653;
+  --lime:          #C6FF3D;
+  --cyan:          #3FE0FF;
+  --gold:          #FFD23D;
+
+  --text:          #F6F2FF;
+  --text-dim:      #A79BC7;
+  --text-faint:    #6F6291;
+
+  --font-display:  'Rubik Mono One', monospace;
+  --font-body:     'Manrope', sans-serif;
+
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html,body{
+  margin:0; padding:0; height:100%;
+  background:
+    radial-gradient(60% 40% at 12% 8%, rgba(255,46,154,.10) 0%, rgba(255,46,154,0) 60%),
+    radial-gradient(55% 38% at 92% 14%, rgba(63,224,255,.08) 0%, rgba(63,224,255,0) 60%),
+    radial-gradient(50% 34% at 14% 94%, rgba(255,210,61,.08) 0%, rgba(255,210,61,0) 60%),
+    radial-gradient(55% 38% at 90% 90%, rgba(198,255,61,.06) 0%, rgba(198,255,61,0) 60%),
+    radial-gradient(120% 90% at 50% -10%, #241945 0%, var(--bg) 55%),
+    var(--bg);
+  background-attachment: fixed, fixed, fixed, fixed, fixed, fixed;
+  color: var(--text);
+  font-family: var(--font-body);
+  overscroll-behavior:none;
+  user-select:none;
+}
+
+/* лёгкий слой медленно плывущих "искр" — добавляет фону жизни, ненавязчиво */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:
+    radial-gradient(1.6px 1.6px at 18% 24%, rgba(255,255,255,.5), transparent 60%),
+    radial-gradient(1.4px 1.4px at 68% 62%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1.2px 1.2px at 38% 78%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1.6px 1.6px at 84% 18%, rgba(255,255,255,.3), transparent 60%),
+    radial-gradient(1.2px 1.2px at 55% 42%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1.4px 1.4px at 8% 55%, rgba(255,255,255,.3), transparent 60%),
+    radial-gradient(1.2px 1.2px at 92% 78%, rgba(255,255,255,.3), transparent 60%);
+  opacity:.55;
+  pointer-events:none;
+  z-index:0;
+  animation: starDrift 50s linear infinite;
+}
+@keyframes starDrift{
+  from{ transform:translate3d(0,0,0); }
+  to{ transform:translate3d(0,-60px,0); }
+}
+
+button{ font-family:inherit; border:none; background:none; color:inherit; cursor:pointer; }
+
+#app{
+  max-width:520px; margin:0 auto;
+  min-height:100vh;
+  display:flex; flex-direction:column;
+  padding-top: var(--safe-top);
+  position:relative; z-index:1;
+}
+
+/* ================= TOP BAR ================= */
+.topbar{
+  padding: 8px 16px 10px;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  position:relative;
+}
+
+/* signature: live-chat style scrolling ticker of meme lines */
+.topbar__ticker{
+  width:100%; overflow:hidden;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,46,154,.14), rgba(63,224,255,.14));
+  border:1px solid var(--stroke);
+  padding:6px 0;
+}
+.topbar__ticker-track{
+  display:flex; align-items:center; gap:0; width:max-content;
+  white-space:nowrap;
+  animation: ticker 26s linear infinite;
+  font-size:12px; font-weight:700; color: var(--text-dim);
+  will-change: transform;
+}
+.topbar__ticker-track span{ padding:0 14px; }
+.topbar__ticker-track .dot{ padding:0; opacity:.45; color:var(--magenta); }
+/* content is rendered twice back-to-back (see renderTicker), so animating
+   exactly half the track's own width loops perfectly with no jump/cut */
+@keyframes ticker{ from{ transform:translateX(0);} to{ transform:translateX(-50%);} }
+
+.balance{ text-align:center; margin-top:4px; }
+.balance__row{ display:flex; align-items:center; justify-content:center; gap:8px; }
+.balance__coin{ font-size:20px; filter:drop-shadow(0 0 8px var(--magenta)); }
+.balance__amount{
+  font-family:var(--font-display);
+  font-size:clamp(28px,8vw,36px);
+  letter-spacing:.5px;
+  background: linear-gradient(90deg, var(--lime), var(--cyan));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter: drop-shadow(0 0 18px rgba(198,255,61,.25));
+  transition: transform .1s ease;
+}
+.balance__label{
+  font-family:var(--font-display); font-size:11px; color:var(--gold);
+  letter-spacing:2px; margin-top:2px;
+}
+
+.topbar__stats{ display:flex; gap:10px; }
+.stat{
+  background:var(--surface); border:1px solid var(--stroke);
+  border-radius: 999px; padding:5px 12px;
+  display:flex; align-items:baseline; gap:6px;
+  box-shadow: 0 4px 14px -6px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.stat__value{ font-weight:800; color:var(--lime); font-size:14px; }
+.stat__label{ font-size:11px; color:var(--text-faint); }
+
+/* ================= SCREENS ================= */
+.screens{ flex:1; padding: 4px 18px 96px; }
+.screen{ display:none; animation: fadeIn .25s ease; }
+.screen.active{ display:block; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+.screen__title{
+  font-family:var(--font-display); font-size:20px; margin: 18px 0 4px;
+  color:var(--text);
+}
+.screen__title--sm{ font-size:15px; margin-top:26px; }
+.screen__subtitle{ color:var(--text-faint); font-size:13px; margin:0 0 16px; }
+
+/* ================= HOME / TAP STAGE ================= */
+.stage{
+  position:relative;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding: 10px 0 4px;
+}
+.stage::before{
+  content:"";
+  position:absolute; top:50%; left:50%;
+  width:min(80vw,320px); height:min(80vw,320px);
+  transform:translate(-50%,-50%);
+  background: radial-gradient(circle, rgba(255,46,154,.14) 0%, rgba(63,224,255,.06) 45%, transparent 72%);
+  pointer-events:none; z-index:-1;
+}
+/* поднят выше кнопки (z-index), чтобы всплывающие мем-картинки/цифры были
+   ПОВЕРХ кнопки визуально, но pointer-events:none гарантирует, что тапы
+   всё равно проходят сквозь этот слой прямо на кнопку под ним */
+.stage__float-layer{
+  position:absolute; inset:0; pointer-events:none; overflow:visible;
+  z-index:5;
+}
+
+.tap-btn{
+  position:relative;
+  z-index:1;
+  width:min(48vw,190px);
+  aspect-ratio: 1086 / 1448;
+  height:auto;
+  border-radius: 36px;
+  background: radial-gradient(circle at 35% 22%, #3a2564, var(--surface) 72%);
+  border: 3px solid var(--stroke);
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:
+    0 0 0 0 rgba(255,46,154,.5),
+    0 26px 54px -16px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  transition: transform .08s ease;
+}
+.tap-btn:active{ transform: scale(.96); }
+.tap-btn--pulse{ animation: tapPulse .35s ease; }
+@keyframes tapPulse{
+  0%{ box-shadow: 0 0 0 0 rgba(255,46,154,.55), 0 26px 54px -16px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06); }
+  100%{ box-shadow: 0 0 0 22px rgba(255,46,154,0), 0 26px 54px -16px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06); }
+}
+.tap-btn__ring, .tap-btn__ring--2{
+  position:absolute; inset:-14px; border-radius:50px;
+  border: 2px solid var(--magenta);
+  opacity:.5;
+  animation: ringSpin 6s linear infinite;
+  pointer-events:none;
+}
+.tap-btn__ring--2{ inset:-26px; border-radius:62px; border-color:var(--cyan); opacity:.3; animation-duration:9s; animation-direction:reverse; }
+@keyframes ringSpin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
+
+.tap-btn__img{
+  position:absolute; inset:0;
+  width:100%; height:100%; object-fit:cover; object-position:center top;
+  border-radius: 33px;
+}
+/* лёгкая виньетка поверх фото — не меняет цвета, только добавляет глубины */
+.tap-btn::after{
+  content:"";
+  position:absolute; inset:0; border-radius:33px;
+  background: linear-gradient(180deg, rgba(15,10,30,0) 55%, rgba(15,10,30,.55) 100%);
+  pointer-events:none;
+}
+.tap-btn__emoji{ display:none; font-size:64px; position:relative; z-index:1; }
+.tap-btn--fallback .tap-btn__emoji{ display:block; }
+
+.hint{
+  margin-top:10px; font-size:12px; color:var(--text-faint);
+  text-align:center; max-width:260px;
+}
+
+.float-num{
+  position:absolute; left:50%; top:40%;
+  font-family:var(--font-display); font-size:20px;
+  color: var(--gold);
+  pointer-events:none;
+  animation: floatUp 1s ease-out forwards;
+}
+@keyframes floatUp{
+  0%{ opacity:1; transform: translate(-50%,0) scale(1); }
+  100%{ opacity:0; transform: translate(calc(-50% + var(--dx,0px)), -90px) scale(1.15); }
+}
+
+/* мем-картинки, выскакивающие в разных местах вокруг кнопки при тапе */
+.float-meme{
+  position:absolute;
+  transform: translate(-50%,-50%) rotate(var(--rot,0deg));
+  object-fit:contain;
+  pointer-events:none;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.5));
+  animation: memePop 1.3s ease-out forwards;
+}
+@keyframes memePop{
+  0%{ opacity:0; transform: translate(-50%,-50%) rotate(var(--rot,0deg)) scale(.4); }
+  15%{ opacity:1; transform: translate(-50%,-50%) rotate(var(--rot,0deg)) scale(1.05); }
+  25%{ transform: translate(-50%,-50%) rotate(var(--rot,0deg)) scale(1); }
+  100%{ opacity:0; transform: translate(-50%,-65%) rotate(var(--rot,0deg)) scale(.92); }
+}
+
+/* ===== мини-полоса прогресса уровня (между кнопкой и быстрыми действиями) ===== */
+.level-strip{
+  margin-top:14px;
+  background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  border:1px solid var(--stroke); border-radius: var(--radius-md);
+  padding:10px 14px 12px;
+  box-shadow: 0 6px 18px -10px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
+}
+.level-strip__row{
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:12px; margin-bottom:8px;
+}
+.level-strip__label{ font-weight:800; color:var(--text); }
+.level-strip__label b{ color:var(--gold); font-family:var(--font-display); font-weight:400; font-size:12px; }
+.level-strip__next{ color:var(--text-faint); font-size:11px; }
+.level-strip__bar{
+  width:100%; height:8px; border-radius:999px;
+  background: rgba(255,255,255,.06);
+  overflow:hidden;
+}
+.level-strip__fill{
+  height:100%; width:0%;
+  background: linear-gradient(90deg, var(--lime), var(--cyan));
+  border-radius:999px;
+  box-shadow: 0 0 10px rgba(198,255,61,.35);
+  transition: width .3s ease;
+}
+
+.quick-actions{ display:flex; gap:10px; margin-top:10px; }
+.pill-btn{
+  flex:1; position:relative;
+  background:var(--surface); border:1px solid var(--stroke);
+  border-radius:999px; padding:11px 10px;
+  font-weight:700; font-size:12.5px; text-align:center;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.pill-btn--boost{ background: linear-gradient(90deg, var(--magenta-dim), var(--surface)); }
+.pill-btn__dot{
+  position:absolute; top:6px; right:10px;
+  width:9px; height:9px; border-radius:50%; background:var(--lime);
+  box-shadow:0 0 8px var(--lime);
+  display:none;
+}
+.pill-btn__dot.show{ display:block; }
+.pill-btn:disabled{ opacity:.45; }
+
+/* ================= UPGRADE CARDS ================= */
+.cards{ display:flex; flex-direction:column; gap:12px; }
+.card{
+  background:var(--surface); border:1px solid var(--stroke);
+  border-radius:var(--radius-md); padding:14px;
+  display:flex; align-items:center; gap:12px;
+  box-shadow: 0 6px 18px -10px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
+}
+.card__icon{
+  width:46px; height:46px; border-radius:14px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:22px;
+  background: linear-gradient(135deg, var(--magenta-dim), var(--surface-2));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.card__body{ flex:1; min-width:0; }
+.card__name{ font-weight:800; font-size:14.5px; }
+.card__desc{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+.card__level{ font-size:11px; color:var(--cyan); margin-top:4px; font-weight:700; }
+.card__buy{
+  background: var(--lime); color:#0F0A1E; font-weight:800;
+  border-radius:999px; padding:10px 14px; font-size:12.5px;
+  white-space:nowrap; flex-shrink:0;
+}
+.card__buy:disabled{ background:var(--stroke); color:var(--text-faint); }
+
+/* ================= LEADERBOARD ================= */
+.leaderboard{ display:flex; flex-direction:column; gap:8px; }
+.lb-empty{
+  text-align:center; color:var(--text-faint); font-size:13px;
+  padding:24px 16px; line-height:1.6;
+  background:var(--surface); border:1px solid var(--stroke); border-radius:var(--radius-md);
+}
+.lb-row{
+  display:flex; align-items:center; gap:12px;
+  background:var(--surface); border:1px solid var(--stroke);
+  border-radius:var(--radius-sm); padding:10px 14px;
+}
+.lb-row--me{ border-color:var(--lime); background:linear-gradient(90deg, rgba(198,255,61,.1), var(--surface)); }
+.lb-rank{ font-family:var(--font-display); font-size:14px; width:26px; color:var(--text-faint); }
+.lb-row:nth-child(1) .lb-rank{ color:var(--gold); }
+.lb-row:nth-child(2) .lb-rank{ color:#C9D2E3; }
+.lb-row:nth-child(3) .lb-rank{ color:#D89A63; }
+.lb-name{ flex:1; font-weight:700; font-size:13.5px; }
+.lb-amount{ font-weight:800; font-size:13px; color:var(--lime); }
+
+/* ================= WHEEL OF FORTUNE ================= */
+.screen--wheel{ position:relative; }
+/* тёплое сияние джекпота над всем экраном колеса */
+.screen--wheel::before{
+  content:"";
+  position:absolute; top:-10px; left:50%;
+  width:130vw; height:440px;
+  transform:translateX(-50%);
+  background:
+    radial-gradient(circle, rgba(255,210,61,.14) 0%, rgba(255,46,154,.09) 38%, transparent 68%);
+  pointer-events:none; z-index:-1;
+}
+
+.wheel-wrap{
+  position:relative;
+  width:min(76vw,300px); aspect-ratio:1;
+  margin: 22px auto 8px;
+}
+/* вращающиеся лучи солнца позади колеса */
+.wheel-wrap::before{
+  content:"";
+  position:absolute; inset:-34px;
+  border-radius:50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255,210,61,.22) 0deg 4deg, transparent 4deg 20deg);
+  filter: blur(.5px);
+  animation: wheelRaySpin 20s linear infinite;
+  z-index:-1;
+}
+/* пульсирующее неоновое свечение вокруг колеса */
+.wheel-wrap::after{
+  content:"";
+  position:absolute; inset:-14px;
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(255,46,154,.28) 0%, rgba(63,224,255,.12) 55%, transparent 75%);
+  z-index:-1;
+  animation: wheelGlowPulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes wheelRaySpin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
+@keyframes wheelGlowPulse{ from{ opacity:.55; transform:scale(.95);} to{ opacity:1; transform:scale(1.05);} }
+
+.wheel{
+  width:100%; height:100%;
+  border-radius:50%;
+  transform-origin:50% 50%;
+  transition: transform 4.5s cubic-bezier(.15,.65,.15,1);
+  box-shadow: 0 0 0 6px var(--stroke), 0 0 40px -6px rgba(255,210,61,.35), 0 24px 50px -14px rgba(0,0,0,.7);
+}
+.wheel-pointer{
+  position:absolute; top:-8px; left:50%;
+  transform:translateX(-50%);
+  width:0; height:0; z-index:5;
+  border-left:14px solid transparent;
+  border-right:14px solid transparent;
+  border-top:24px solid var(--gold);
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,.55));
+}
+.wheel-spin-btn{
+  display:block; width:100%; margin-top:22px;
+  font-size:14.5px;
+}
+
+/* ================= PROFILE ================= */
+.profile-card{
+  background: linear-gradient(160deg, var(--surface-2), var(--surface));
+  border:1px solid var(--stroke); border-radius:var(--radius-lg);
+  padding:22px; text-align:center; margin-top:12px;
+}
+.profile-card__avatar{ font-size:40px; }
+.profile-card__name{ font-weight:800; font-size:17px; margin-top:6px; }
+.profile-card__level{ color:var(--cyan); font-size:12.5px; margin-top:2px; font-weight:700; }
+
+.profile-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;
+}
+.profile-stat{
+  background:var(--surface); border:1px solid var(--stroke);
+  border-radius:var(--radius-sm); padding:12px; text-align:center;
+}
+.profile-stat__value{ font-family:var(--font-display); font-size:16px; color:var(--gold); }
+.profile-stat__label{ font-size:11px; color:var(--text-faint); margin-top:4px; }
+
+.achievements{ display:flex; flex-direction:column; gap:8px; }
+.ach{
+  display:flex; align-items:center; gap:10px;
+  background:var(--surface); border:1px solid var(--stroke);
+  border-radius:var(--radius-sm); padding:10px 12px; opacity:.4;
+}
+.ach.unlocked{ opacity:1; border-color:var(--lime); }
+.ach__icon{ font-size:20px; }
+.ach__name{ font-weight:800; font-size:13px; }
+.ach__desc{ font-size:11px; color:var(--text-faint); }
+
+/* ================= PROMO CODE ================= */
+.promo-card{
+  position:relative; overflow:hidden;
+  background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  border:1px solid var(--stroke); border-radius: var(--radius-md);
+  padding:14px 14px 12px;
+  box-shadow: 0 6px 18px -10px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
+}
+.promo-card::before{
+  content:"";
+  position:absolute; top:-40%; right:-15%;
+  width:150px; height:150px;
+  background: radial-gradient(circle, rgba(255,210,61,.18) 0%, transparent 70%);
+  pointer-events:none;
+}
+.promo-card::after{
+  content:"";
+  position:absolute; inset:0; border-radius:inherit;
+  padding:1px;
+  background: linear-gradient(120deg, rgba(255,210,61,.35), transparent 40%, transparent 60%, rgba(255,46,154,.3));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events:none;
+}
+.promo-card__row{ display:flex; gap:8px; position:relative; z-index:1; }
+.promo-card__input{
+  flex:1; min-width:0;
+  background:var(--bg); border:1px solid var(--stroke); border-radius:12px;
+  padding:12px 14px; color:var(--text); font-size:13px; font-family:var(--font-body);
+  letter-spacing:.3px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.promo-card__input::placeholder{ color:var(--text-faint); }
+.promo-card__input:focus{
+  outline:none; border-color:var(--cyan);
+  box-shadow: 0 0 0 3px rgba(63,224,255,.15);
+}
+.promo-card__btn{
+  flex-shrink:0;
+  background: linear-gradient(90deg, var(--magenta), var(--cyan));
+  color:#0F0A1E; font-weight:800; font-size:12.5px;
+  border-radius:12px; padding:0 18px;
+  box-shadow: 0 4px 16px -6px rgba(255,46,154,.55);
+  transition: transform .12s ease;
+}
+.promo-card__btn:active{ transform:scale(.94); }
+.promo-card__msg{
+  position:relative; z-index:1;
+  margin-top:10px; font-size:12px; min-height:14px;
+  color:var(--text-faint); line-height:1.4;
+}
+.promo-card__msg--ok{ color:var(--lime); }
+.promo-card__msg--err{ color:#FF7CB0; }
+
+.danger-btn{
+  width:100%; margin:28px 0 10px; padding:13px;
+  border-radius:999px; border:1px solid #5A2440;
+  color:#FF7CB0; font-weight:700; font-size:13px;
+  background:rgba(255,46,154,.06);
+}
+
+/* ================= BOTTOM NAV ================= */
+.navbar{
+  position:fixed; left:0; right:0; bottom:0;
+  max-width:520px; margin:0 auto;
+  background: rgba(15,10,30,.92);
+  backdrop-filter: blur(14px);
+  border-top:1px solid var(--stroke);
+  box-shadow: 0 -10px 30px -12px rgba(0,0,0,.6);
+  display:flex;
+  padding-bottom: var(--safe-bottom);
+}
+.navbtn{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:8px 0 6px; font-size:9.5px; font-weight:700; color:var(--text-faint);
+  transition: color .15s ease;
+}
+.navbtn__icon{ font-size:18px; filter:grayscale(1); opacity:.6; transition: filter .15s ease, opacity .15s ease, transform .15s ease; }
+.navbtn.active{ color:var(--lime); }
+.navbtn.active .navbtn__icon{ filter:none; opacity:1; transform: translateY(-1px); }
+
+/* ================= MODAL ================= */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(8,5,16,.72);
+  display:none; align-items:center; justify-content:center; z-index:50;
+  padding:24px;
+}
+.modal-backdrop.show{ display:flex; }
+.modal{
+  width:100%; max-width:340px;
+  background: linear-gradient(165deg, var(--surface-2), var(--surface));
+  border:1px solid var(--stroke); border-radius:var(--radius-lg);
+  padding:28px 22px; text-align:center;
+  animation: modalIn .25s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes modalIn{ from{ opacity:0; transform:scale(.85);} to{ opacity:1; transform:scale(1);} }
+.modal__emoji{ font-size:44px; }
+.modal__title{ font-family:var(--font-display); font-size:18px; margin-top:10px; }
+.modal__text{ color:var(--text-dim); font-size:13.5px; margin-top:8px; line-height:1.5; }
+.modal__btn{
+  margin-top:20px; width:100%; padding:13px;
+  background: linear-gradient(90deg, var(--lime), var(--cyan));
+  color:#0F0A1E; font-weight:800; border-radius:999px; font-size:14px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; }
+  /* бегущая строка — не декоративный эффект, а способ показать весь текст,
+     поэтому её не замораживаем даже при reduce-motion */
+  .topbar__ticker-track{ animation-duration:26s !important; animation-iteration-count:infinite !important; }
+}
